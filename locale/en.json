@@ -1,0 +1,7 @@
+{
+  "meta": { "title": "Conversation windows", "description": "Open a conversation in a native desktop window. Requires the experimental desktop adapter." },
+  "openWindow": "Open in new window",
+  "adapterRequired": "This feature requires a compatible DSH desktop conversation-window adapter. A browser pop-up is not a replacement.",
+  "openFailed": "Could not open the conversation window: {message}",
+  "unknownError": "Unknown desktop error"
+}

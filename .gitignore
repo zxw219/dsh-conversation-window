@@ -1,0 +1,11 @@
+# Local rebuilds contain upstream software and MUST NOT be published.
+/build/
+/dist/
+/node_modules/
+*.asar
+*.asar.unpacked/
+*.blend
+.env*
+*.log
+__pycache__/
+*.pyc

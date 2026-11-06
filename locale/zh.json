@@ -1,0 +1,7 @@
+{
+  "meta": { "title": "对话独立窗口", "description": "在原生桌面窗口中打开对话。需要实验性桌面适配补丁。" },
+  "openWindow": "在新窗口中打开",
+  "adapterRequired": "此功能需要兼容的 DSH 桌面对话窗口适配补丁；浏览器弹窗不能代替原生窗口。",
+  "openFailed": "无法打开对话窗口：{message}",
+  "unknownError": "未知桌面错误"
+}

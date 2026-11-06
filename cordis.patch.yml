@@ -1,0 +1,4 @@
+- insert:
+    - id: zxw219-conversation-window
+      name: '@zxw219/dsh-conversation-window'
+      config: {}
