@@ -94,6 +94,12 @@ node --test tests/routing.test.mjs
 - [ ] 无效或无权 ID 走原有错误提示；外部来源不能调用窗口 IPC。
 - [ ] 系统窗口移动、缩放、最小化、关闭正常。
 
+## 相关插件
+
+[DSH 经典 Agent 模式按钮](https://github.com/zxw219/dsh-classic-agent-button)：在 Windows 版 DSH 桌面端顶部「编辑」右侧添加按钮，单击从 DS Bot 切换到经典 Agent 模式。需要启用 DS Bot，具体适配版本见该仓库说明。
+
+两个插件可按需分别安装、独立更新，互不依赖。
+
 ## 仓库内容
 
 - `client.js`、`index.js`、`cordis.patch.yml`、`locale/`、`icon.svg`：原创插件。
