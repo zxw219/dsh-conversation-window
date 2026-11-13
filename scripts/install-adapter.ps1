@@ -22,7 +22,7 @@ if ($Restore) {
     exit
 }
 if (!(Test-Path -LiteralPath $candidate)) { throw 'Build the adapter first with scripts/build_adapter.py.' }
-if ((Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash -ne '5FA8A6B21BCEB8F3E99E30EFA2270EFD0CC773A11E42AA0488F804A64B34E637') {
+if ((Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash -ne '14CFD81C9135BF0AFB89417543C94F9ECFE09266574452A9B106890C698725AE') {
     throw 'Unsupported or already patched app.asar. Only the inspected original Windows build is supported.'
 }
 if (Test-Path -LiteralPath $backup) { throw 'Backup already exists; inspect it before reinstalling. Never overwrite a recovery copy.' }

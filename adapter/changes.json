@@ -1,76 +1,84 @@
 {
-  "desktopVersion": "0.2.2-rc.1",
+  "desktopVersion": "0.2.2-rc.3",
   "changes": [
     {
       "path": "lib/main.js",
-      "sha256": "f42ed25b0b844a63e515a3aff93dee89b781dae7fcbbbbfc93e04d95ad399ec1",
-      "resultSha256": "f9e87b0666203f2063e3518cf9e64007eac4ccc86524016273372ce5ec877431",
+      "sha256": "f808749c7a1a907e1acb354e774d1cebf1d1c2561fd789d8fbee1e9c412caa00",
+      "resultSha256": "484c0780b50be6cf7aa1783cc720c9144b05e7525128d8a674990424f3ff03bd",
       "edits": [
         {
-          "old": "import { createRequire } from \"node:module\";\nimport { BrowserWindow, Menu, Notification, Tray, WebContentsView, app, clipboard, dialog, ipcMain, nativeImage, nativeTheme, net, powerMonitor, protocol, session, shell, systemPreferences } from \"electron\";\n",
-          "new": "import { createConversationWindows } from './conversation-windows.mjs';\nimport { createRequire } from \"node:module\";\nimport { BrowserWindow, Menu, Notification, Tray, WebContentsView, app, clipboard, dialog, ipcMain, nativeImage, nativeTheme, net, powerMonitor, protocol, session, shell, systemPreferences } from \"electron\";\n"
+          "old": "import { createRequire } from \"node:module\";\n",
+          "new": "import { createConversationWindows } from './conversation-windows.mjs';\nimport { createRequire } from \"node:module\";\n"
         },
         {
-          "old": "* @param getWindow - Current local application window; shell pages and subframes cannot open dialogs.\n*/\nfunction installDesktopDirectoryPicker(getWindow) {\n\tconst pending = /* @__PURE__ */ new WeakMap();\n\tipcMain.handle(DESKTOP_IPC.directoryPick, async (event) => {\n\t\tconst window = getWindow();\n\t\tif (window === void 0 || window.isDestroyed() || event.sender !== window.webContents || event.senderFrame !== window.webContents.mainFrame) throw new Error(\"dsh desktop: rejected directory picker from an unowned renderer\");\n\t\tassertDesktopSender(event, [\"app\"]);\n",
-          "new": "* @param getWindow - Current local application window; shell pages and subframes cannot open dialogs.\n*/\nfunction installDesktopDirectoryPicker(getWindow, resolveOwner) {\n\tconst pending = /* @__PURE__ */ new WeakMap();\n\tipcMain.handle(DESKTOP_IPC.directoryPick, async (event) => {\n\t\tconst window = resolveOwner?.(event) ?? getWindow();\n\t\tif (window === void 0 || window.isDestroyed() || event.sender !== window.webContents || event.senderFrame !== window.webContents.mainFrame) throw new Error(\"dsh desktop: rejected directory picker from an unowned renderer\");\n\t\tassertDesktopSender(event, [\"app\"]);\n"
+          "old": "* @param getWindow - Current local application window; shell pages and subframes cannot open dialogs.\n*/\nfunction installDesktopDirectoryPicker(getWindow) {",
+          "new": "* @param getWindow - Current local application window; shell pages and subframes cannot open dialogs.\n*/\nfunction installDesktopDirectoryPicker(getWindow, resolveOwner) {"
         },
         {
-          "old": "* @returns menu construction, editor key delivery, window attachment, and teardown operations.\n*/\nfunction installDesktopShortcuts(getWindow, userData, platform, updateMenu, overlayInput) {\n\tlet definitions = [];\n\tlet recording = false;\n",
-          "new": "* @returns menu construction, editor key delivery, window attachment, and teardown operations.\n*/\nfunction installDesktopShortcuts(getWindow, userData, platform, updateMenu, overlayInput, resolveOwner) {\n\tlet definitions = [];\n\tlet recording = false;\n"
+          "old": "const window = getWindow();\n\t\tif (window === void 0 || window.isDestroyed() || event.sender !== window.webContents || event.senderFrame !== window.webContents.mainFrame) throw new Error(\"dsh desktop: rejected directory picker from an unowned renderer\");",
+          "new": "const window = resolveOwner?.(event) ?? getWindow();\n\t\tif (window === void 0 || window.isDestroyed() || event.sender !== window.webContents || event.senderFrame !== window.webContents.mainFrame) throw new Error(\"dsh desktop: rejected directory picker from an unowned renderer\");"
         },
         {
-          "old": "\tconst persistence = desktopKeybindings(userData, platform, publish);\n\tconst assertSender = (event) => {\n\t\tconst window = getWindow();\n\t\tif (window === void 0 || window.isDestroyed() || event.sender !== window.webContents || event.senderFrame !== window.webContents.mainFrame) throw new Error(\"desktop shortcuts: rejected sender\");\n\t\tassertDesktopSender(event, [\"app\"]);\n",
-          "new": "\tconst persistence = desktopKeybindings(userData, platform, publish);\n\tconst assertSender = (event) => {\n\t\tconst window = resolveOwner?.(event) ?? getWindow();\n\t\tif (window === void 0 || window.isDestroyed() || event.sender !== window.webContents || event.senderFrame !== window.webContents.mainFrame) throw new Error(\"desktop shortcuts: rejected sender\");\n\t\tassertDesktopSender(event, [\"app\"]);\n"
+          "old": "* @returns menu construction, editor key delivery, window attachment, and teardown operations.\n*/\nfunction installDesktopShortcuts(getWindow, userData, platform, updateMenu, overlayInput) {",
+          "new": "* @returns menu construction, editor key delivery, window attachment, and teardown operations.\n*/\nfunction installDesktopShortcuts(getWindow, userData, platform, updateMenu, overlayInput, resolveOwner) {"
         },
         {
-          "old": "\t\tconst clear = () => {\n\t\t\tresetInput();\n\t\t\tif (guestName !== void 0) return;\n\t\t\tdefinitions = [];\n\t\t\tkeys.clear();\n",
-          "new": "\t\tconst clear = () => {\n\t\t\tresetInput();\n\t\t\tif (guestName !== void 0 || window !== getWindow()) return;\n\t\t\tdefinitions = [];\n\t\t\tkeys.clear();\n"
+          "old": "const persistence = desktopKeybindings(userData, platform, publish);\n\tconst assertSender = (event) => {\n\t\tconst window = getWindow();",
+          "new": "const persistence = desktopKeybindings(userData, platform, publish);\n\tconst assertSender = (event) => {\n\t\tconst window = resolveOwner?.(event) ?? getWindow();"
         },
         {
-          "old": "\tconst assertProductSender = (event) => {\n\t\tassertDesktopSender(event, [\"app\"]);\n\t\tif (mainWindow === void 0 || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents || event.senderFrame === null || event.senderFrame !== mainWindow.webContents.mainFrame) throw new Error(\"dsh desktop: rejected IPC from an unowned renderer\");\n\t\treturn mainWindow;\n\t};\n\tlet navigation;\n\tconst navigateMain = (url) => {\n",
-          "new": "\tconst assertProductSender = (event) => {\n\t\tassertDesktopSender(event, [\"app\"]);\n\t\tconst owner = BrowserWindow.fromWebContents(event.sender);\n\t\tif (owner === null || owner.isDestroyed() || (owner !== mainWindow && !conversationWindows.owns(event.sender)) || event.senderFrame !== owner.webContents.mainFrame) throw new Error(\"dsh desktop: rejected IPC from an unowned renderer\");\n\t\treturn owner;\n\t};\n\tconst conversationWindows = createConversationWindows({\n\t\tapplicationUrl, createWindow, preload: appPreload, assertSender: assertProductSender,\n\t\tattach(window) { shortcuts.attach(window); }\n\t});\n\tlet navigation;\n\tconst navigateMain = (url) => {\n"
+          "old": "\t\tconst clear = () => {\n\t\t\tresetInput();\n\t\t\tif (guestName !== void 0) return;",
+          "new": "\t\tconst clear = () => {\n\t\t\tresetInput();\n\t\t\tif (guestName !== void 0 || window !== getWindow()) return;"
         },
         {
-          "old": "\t\treturn Promise.resolve(new Response(null, { status: 404 }));\n\t});\n\tinstallDesktopDirectoryPicker(() => mainWindow);\n\tinstallMicrophonePermissions(session.defaultSession, () => mainWindow?.webContents);\n\tconst shortcuts = installDesktopShortcuts(() => mainWindow, app.getPath(\"userData\"), process.platform === \"darwin\" ? \"macos\" : process.platform === \"win32\" ? \"windows\" : \"linux\", () => {\n\t\trefreshApplicationMenu();\n\t}, (window) => updateOverlays.input(window));\n\tapp.on(\"will-quit\", () => {\n\t\tshortcuts.dispose();\n\t});\n\tipcMain.handle(DESKTOP_IPC.boot, async (event) => {\n\t\tassertDesktopSender(event, [\"app\"]);\n\t\tawait startup;\n\t\tif (backend.host === void 0 || hostUrl === void 0) throw new Error(\"Desktop Host is unavailable\");\n",
-          "new": "\t\treturn Promise.resolve(new Response(null, { status: 404 }));\n\t});\n\tinstallDesktopDirectoryPicker(() => mainWindow, assertProductSender);\n\tinstallMicrophonePermissions(session.defaultSession, () => mainWindow?.webContents);\n\tconst shortcuts = installDesktopShortcuts(() => mainWindow, app.getPath(\"userData\"), process.platform === \"darwin\" ? \"macos\" : process.platform === \"win32\" ? \"windows\" : \"linux\", () => {\n\t\trefreshApplicationMenu();\n\t}, (window) => updateOverlays.input(window), assertProductSender);\n\tapp.on(\"will-quit\", () => {\n\t\tshortcuts.dispose();\n\t});\n\tipcMain.handle('dsh-desktop:conversation-open', (event, sessionId) => conversationWindows.open(event, sessionId));\n\tipcMain.handle(DESKTOP_IPC.boot, async (event) => {\n\t\tassertProductSender(event);\n\t\tawait startup;\n\t\tif (backend.host === void 0 || hostUrl === void 0) throw new Error(\"Desktop Host is unavailable\");\n"
+          "old": "const assertProductSender = (event) => {\n\t\tassertDesktopSender(event, [\"app\"]);\n\t\tif (mainWindow === void 0 || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents || event.senderFrame === null || event.senderFrame !== mainWindow.webContents.mainFrame) throw new Error(\"dsh desktop: rejected IPC from an unowned renderer\");\n\t\treturn mainWindow;\n\t};\n\tlet navigation;",
+          "new": "const assertProductSender = (event) => {\n\t\tassertDesktopSender(event, [\"app\"]);\n\t\tconst owner = BrowserWindow.fromWebContents(event.sender);\n\t\tif (owner === null || owner.isDestroyed() || (owner !== mainWindow && !conversationWindows.owns(event.sender)) || event.senderFrame !== owner.webContents.mainFrame) throw new Error(\"dsh desktop: rejected IPC from an unowned renderer\");\n\t\treturn owner;\n\t};\n\tconst conversationWindows = createConversationWindows({\n\t\tapplicationUrl, createWindow, preload: appPreload, assertSender: assertProductSender,\n\t\tattach(window) { shortcuts.attach(window); }\n\t});\n\tlet navigation;"
         },
         {
-          "old": "\t});\n\tsession.defaultSession.webRequest.onBeforeSendHeaders({ urls: [\"ws://127.0.0.1/*\", \"wss://127.0.0.1/*\"] }, (details, callback) => {\n\t\tif (hostUrl === void 0 || hostCookie === void 0 || details.webContentsId !== mainWindow?.webContents.id) {\n\t\t\tcallback({});\n\t\t\treturn;\n",
-          "new": "\t});\n\tsession.defaultSession.webRequest.onBeforeSendHeaders({ urls: [\"ws://127.0.0.1/*\", \"wss://127.0.0.1/*\"] }, (details, callback) => {\n\t\tif (hostUrl === void 0 || hostCookie === void 0 || (details.webContentsId !== mainWindow?.webContents.id && !conversationWindows.ownsId(details.webContentsId))) {\n\t\t\tcallback({});\n\t\t\treturn;\n"
+          "old": "\tinstallDesktopDirectoryPicker(() => mainWindow);\n\tinstallMicrophonePermissions(session.defaultSession, () => mainWindow?.webContents);\n\tconst shortcuts = installDesktopShortcuts(() => mainWindow, app.getPath(\"userData\"), process.platform === \"darwin\" ? \"macos\" : process.platform === \"win32\" ? \"windows\" : \"linux\", () => {\n\t\trefreshApplicationMenu();\n\t}, (window) => updateOverlays.input(window));",
+          "new": "\tinstallDesktopDirectoryPicker(() => mainWindow, assertProductSender);\n\tinstallMicrophonePermissions(session.defaultSession, () => mainWindow?.webContents);\n\tconst shortcuts = installDesktopShortcuts(() => mainWindow, app.getPath(\"userData\"), process.platform === \"darwin\" ? \"macos\" : process.platform === \"win32\" ? \"windows\" : \"linux\", () => {\n\t\trefreshApplicationMenu();\n\t}, (window) => updateOverlays.input(window), assertProductSender);"
         },
         {
-          "old": "\t\t} });\n\t});\n\tconst assertMainApplication = (event) => {\n\t\tconst owner = mainWindow;\n\t\tif (owner === void 0 || event.sender !== owner.webContents || event.senderFrame !== owner.webContents.mainFrame || !event.senderFrame.url.startsWith(\"dsh-app://app/\")) throw new Error(\"Rejected Platform command\");\n\t\treturn owner;\n\t};\n\tinstallFileActions(assertMainApplication, () => hostUrl);\n\tipcMain.on(PLATFORM_IPC.bootstrap, (event) => {\n",
-          "new": "\t\t} });\n\t});\n\tconst assertMainApplication = assertProductSender;\n\tinstallFileActions(assertMainApplication, () => hostUrl);\n\tipcMain.on(PLATFORM_IPC.bootstrap, (event) => {\n"
+          "old": "\tapp.on(\"will-quit\", () => {\n\t\tshortcuts.dispose();\n\t});\n\tipcMain.handle(DESKTOP_IPC.boot, async (event) => {",
+          "new": "\tapp.on(\"will-quit\", () => {\n\t\tshortcuts.dispose();\n\t});\n\tipcMain.handle('dsh-desktop:conversation-open', (event, sessionId) => conversationWindows.open(event, sessionId));\n\tipcMain.handle(DESKTOP_IPC.boot, async (event) => {"
         },
         {
-          "old": "\t});\n\tipcMain.handle(DESKTOP_IPC.localeBootstrap, async (event) => {\n\t\tif (event.sender !== mainWindow?.webContents || event.senderFrame !== mainWindow.webContents.mainFrame || new URL(event.senderFrame.url).origin !== new URL(applicationUrl).origin) throw new Error(\"desktop welcome: rejected locale request from an unowned frame\");\n\t\tif (welcomeBackend === void 0) throw new Error(\"desktop welcome: backend unavailable\");\n\t\treturn {\n",
-          "new": "\t});\n\tipcMain.handle(DESKTOP_IPC.localeBootstrap, async (event) => {\n\t\tassertProductSender(event);\n\t\tif (welcomeBackend === void 0) throw new Error(\"desktop welcome: backend unavailable\");\n\t\treturn {\n"
+          "old": "\t\tif (hostUrl === void 0 || hostCookie === void 0 || details.webContentsId !== mainWindow?.webContents.id) {",
+          "new": "\t\tif (hostUrl === void 0 || hostCookie === void 0 || (details.webContentsId !== mainWindow?.webContents.id && !conversationWindows.ownsId(details.webContentsId))) {"
+        },
+        {
+          "old": "\tconst assertMainApplication = (event) => {\n\t\tconst owner = mainWindow;\n\t\tif (owner === void 0 || event.sender !== owner.webContents || event.senderFrame !== owner.webContents.mainFrame || !event.senderFrame.url.startsWith(\"dsh-app://app/\")) throw new Error(\"Rejected Platform command\");\n\t\treturn owner;\n\t};",
+          "new": "\tconst assertMainApplication = assertProductSender;"
+        },
+        {
+          "old": "\tipcMain.handle(DESKTOP_IPC.localeBootstrap, async (event) => {\n\t\tif (event.sender !== mainWindow?.webContents || event.senderFrame !== mainWindow.webContents.mainFrame || new URL(event.senderFrame.url).origin !== new URL(applicationUrl).origin) throw new Error(\"desktop welcome: rejected locale request from an unowned frame\");",
+          "new": "\tipcMain.handle(DESKTOP_IPC.localeBootstrap, async (event) => {\n\t\tassertProductSender(event);"
         }
       ]
     },
     {
       "path": "lib/preload-app.cjs",
-      "sha256": "d6126b3555fcb679f79922c23976025ab260a08f98bc2d20984e112ded397b96",
-      "resultSha256": "88eba062a995262830da2cbc972fb36eb808f3d2335874d7a0a177fa0b1518ff",
+      "sha256": "cca56f6da8272f4b78b708a285816fcfd567e701f1248eab777d3943c50e233e",
+      "resultSha256": "4ac0f62a55b109efc082c2b369852056658faf5bbaa1def0fa856b8232fa0675",
       "edits": [
         {
-          "old": "\treturn {\n\t\tprotocolVersion: 1,\n\t\tfileActions: {\n\t\t\tsave: (request) => electron.ipcRenderer.invoke(DESKTOP_IPC.fileSave, request),\n",
-          "new": "\treturn {\n\t\tprotocolVersion: 1,\n\t\tconversations: { openWindow: (sessionId) => electron.ipcRenderer.invoke('dsh-desktop:conversation-open', sessionId) },\n\t\tfileActions: {\n\t\t\tsave: (request) => electron.ipcRenderer.invoke(DESKTOP_IPC.fileSave, request),\n"
+          "old": "\treturn {\n\t\tprotocolVersion: 1,\n",
+          "new": "\treturn {\n\t\tprotocolVersion: 1,\n\t\tconversations: { openWindow: (sessionId) => electron.ipcRenderer.invoke('dsh-desktop:conversation-open', sessionId) },\n"
         }
       ]
     },
     {
       "path": "dsh/node_modules/@deepseek-ai/dsh-client-ui-workspace/lib/client.js",
-      "sha256": "0180cefb85c1a71a1d441a8f9533663a8933d5e3f65f8dd23187c5f6147fe12f",
-      "resultSha256": "3fbb5f3a8be3c4578a6397b121b0a8c5465cce8e2708816d978960edb92f5cef",
+      "sha256": "9695de66609c6fbe0857da1d1b4b7456a543b962bf1c19ab210ec5ef688cf9c7",
+      "resultSha256": "657af37d2baff989b1b3cc36e61318930b1ebc629c465570ddf6e9795b95e556",
       "edits": [
         {
-          "old": "\t\t\tconnecting = /* @__PURE__ */ new Map();\n\t\t\tlifetime = new AbortController();\n\t\t\tselection = (0, _deepseek_ai_dsh_client_store.createSnapshotStore)({}, { persist: { name: \"dsh.sessions.current\" } });\n\t\t\tmainReference;\n\t\t\trestorationNavigation;\n",
-          "new": "\t\t\tconnecting = /* @__PURE__ */ new Map();\n\t\t\tlifetime = new AbortController();\n\t\t\tselection = (0, _deepseek_ai_dsh_client_store.createSnapshotStore)({}, new URLSearchParams(location.search).has('conversation') ? {} : { persist: { name: \"dsh.sessions.current\" } });\n\t\t\tmainReference;\n\t\t\trestorationNavigation;\n"
+          "old": "selection=(0,_deepseek_ai_dsh_client_store.createSnapshotStore)({},{persist:{name:`dsh.sessions.current`}});",
+          "new": "selection=(0,_deepseek_ai_dsh_client_store.createSnapshotStore)({},new URLSearchParams(location.search).has(`conversation`)?{}:{persist:{name:`dsh.sessions.current`}});"
         },
         {
-          "old": "\t\t\t}\n\t\t\tasync restoreSelection(workspaces, sessions) {\n\t\t\t\tconst saved = this.selection.getSnapshot();\n\t\t\t\tif (saved.subagentAddress !== void 0) {\n",
-          "new": "\t\t\t}\n\t\t\tasync restoreSelection(workspaces, sessions) {\n\t\t\t\tconst requested = new URLSearchParams(location.search).get('conversation');\n\t\t\t\tif (requested !== null) {\n\t\t\t\t\ttry {\n\t\t\t\t\t\tthis.replaceMain(requested, this.lifetime.signal, 'reveal');\n\t\t\t\t\t} catch (error) {\n\t\t\t\t\t\tthis.notify({ kind: 'createFailed', message: creationFailureMessage(error) });\n\t\t\t\t\t}\n\t\t\t\t\treturn;\n\t\t\t\t}\n\t\t\t\tconst saved = this.selection.getSnapshot();\n\t\t\t\tif (saved.subagentAddress !== void 0) {\n"
+          "old": "async restoreSelection(workspaces,sessions){const saved=this.selection.getSnapshot();",
+          "new": "async restoreSelection(workspaces,sessions){const requested=new URLSearchParams(location.search).get(`conversation`);if(requested!==null){try{this.replaceMain(requested,this.lifetime.signal,`reveal`)}catch(error){this.notify({kind:`createFailed`,message:creationFailureMessage(error)})}return}const saved=this.selection.getSnapshot();"
         }
       ]
     }

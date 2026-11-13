@@ -5,8 +5,9 @@ import vm from 'node:vm';
 
 const source = readFileSync(new URL('../build/workspace-client.js', import.meta.url), 'utf8');
 const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
-const routeBody = source.split('async restoreSelection(workspaces, sessions) {')[1].split('\n\t\t\tasync initializeDefaultWorkspace')[0].replace(/\n\t\t\t}\s*$/, '');
-const restore = new AsyncFunction('workspaces', 'sessions', 'location', 'creationFailureMessage', routeBody);
+const routeMatch = source.match(/async restoreSelection\(workspaces,sessions\)\{([\s\S]*?)\}async initializeDefaultWorkspace/);
+assert.ok(routeMatch, 'built workspace client must expose the rc.3 restoreSelection route');
+const restore = new AsyncFunction('workspaces', 'sessions', 'location', 'creationFailureMessage', routeMatch[1]);
 
 test('explicit B takes precedence over saved A; no blank session creation', async () => {
   const calls = [];
@@ -37,5 +38,5 @@ test('unknown/unauthorized explicit target uses existing notice and does not fal
 });
 
 test('deep-link startup selection is not persisted into primary window selection', () => {
-  assert.match(source, /has\('conversation'\) \? \{\} : \{ persist: \{ name: "dsh.sessions.current" \} \}/);
+  assert.match(source, /has\(`conversation`\)\?\{\}:\{persist:\{name:`dsh\.sessions\.current`\}\}/);
 });
