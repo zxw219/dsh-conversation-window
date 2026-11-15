@@ -113,6 +113,7 @@ node --test tests/routing.test.mjs
 两个插件可按需分别安装、独立更新，互不依赖。
 ## 仓库内容
 
+- `AGENTS.md`：给智能体的入口，指向下面的修复手册与硬规则。
 - `client.js`、`index.js`、`cordis.patch.yml`、`locale/`、`icon.svg`：原创插件。
 - `adapter/conversation-windows.mjs`：窗口生命周期与 ID 校验。
 - `adapter/changes.json`：最小版本固定差异，**不含完整上游编译产物**。

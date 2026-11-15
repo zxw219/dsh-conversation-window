@@ -4,6 +4,26 @@
 > 适用对象：Windows Desktop `0.2.2-rc.3` + 本仓库 `adapter` 补丁。
 > 下文用 `$env:LOCALAPPDATA\Programs\DeepSeek Harness\resources` 表示资源目录，按实际安装位置替换。
 
+## 铁律：不成功就停
+
+本手册的步骤允许失败。**失败不是继续发挥的理由**。命中以下任一情况，立即停止并把证据交给宿主（用户），等指令再动：
+
+1. 任一锚点在新版本文件里搜不到，或搜到多处无法唯一确定 —— 说明上游结构变了。
+2. `build_adapter.py` 连续两次报同一处校验错误。
+3. 第 6 节的静态核验输出不是 `RESULT PASS`。
+4. 安装成功但右键菜单仍提示「需要兼容的 DSH 桌面对话窗口适配补丁」，或子窗口白屏、打开即崩。
+5. 宿主手动测试后反馈不通过。
+
+停下时**不要**做这些事：改 `$patchedHash` 去迁就一个没验证过的包；注释掉或放宽 `changes.json` 的校验；跳过测试直接装；把功能降级成浏览器弹窗；反复重启应用重试。
+
+交给宿主的报告只写五项，不要长篇复盘：
+
+1. 当前版本号 + `app.asar` 哈希；
+2. 卡在第几步 + 原始报错文本；
+3. 已经改过哪些文件、改了什么；
+4. 具体哪个锚点/接口不见了（贴出你搜的关键字）；
+5. 需要宿主决定的事项（例如：是否接受按新结构重新设计补丁）。
+
 ## 0. 三十秒判定
 
 ```powershell
@@ -17,6 +37,8 @@
 | 其他 | 应用已升级，版本不是 rc.3 | 走第 3 节（重做锚点） |
 
 症状对照：右键菜单提示「此功能需要兼容的 DSH 桌面对话窗口适配补丁」= `window.dshDesktop.conversations` 不存在 = 补丁没生效。
+
+表中的两个哈希只对 rc.3 有效。**重做补丁后必须回来更新这张表**，否则第 3 行永远命中「其他」分支，判定就废了。
 
 ## 1. 为什么会失效
 
@@ -72,7 +94,19 @@ for k in ['lib/main.js', 'lib/preload-app.cjs',
 | `edits[].new` | 保持原改动意图，只替换定位用的原文 |
 | `resultSha256` | 整文件应用完所有 edit 后的 SHA-256 |
 
-三个文件共 17 条 edit。锚点语义见第 4 节。改错不会静默通过：`build_adapter.py` 校验原始哈希、原文唯一性、结果哈希，任一不符即报错不产出。
+`resultSha256` 的口径：把该文件的全部 `old` 依次替换为 `new` 后，取结果的 UTF-8 字节算 SHA-256（小写十六进制），不是原文件、也不是逐条 edit 的哈希。自算时用：
+
+```python
+import hashlib, json, pathlib
+spec = json.loads(pathlib.Path('adapter/changes.json').read_text('utf8'))
+for change in spec['changes']:
+    text = pathlib.Path(change['path']).read_text('utf8')   # 传入提取出的原始文件路径
+    for edit in change['edits']:
+        text = text.replace(edit['old'], edit['new'], 1)
+    print(change['path'], hashlib.sha256(text.encode('utf8')).hexdigest())
+```
+
+rc.3 下三个文件共 17 条 edit；**这个数字随上游变化，不是目标**。以每条 edit 的语义（第 4 节）为准，凑数量必然出错。改错不会静默通过：`build_adapter.py` 校验原始哈希、原文唯一性、结果哈希，任一不符即报错不产出。
 
 ### 3.3 构建与回归
 
@@ -87,6 +121,33 @@ node --test tests/routing.test.mjs   # 需要上一步的本地产物
 把新 `build/app.conversation-window.asar` 的 SHA-256 写入 `scripts/install-adapter.ps1` 的 `$patchedHash`，然后走第 2 节。
 
 ## 4. 补丁改了什么（锚点语义）
+
+### 4.0 先做结构判据，再动手
+
+下面 1–9 条是 **rc.3 的形状**。搬到新版本之前先确认这三个结构还在（文件为第 3.1 步提取出的原始文件）：
+
+```powershell
+$new = "$env:USERPROFILE\dsh-asar-new"
+$probes = @(
+  @{ file = 'main.js';         pattern = 'function createWindow\(' },
+  @{ file = 'main.js';         pattern = 'createWindow\(appPreload' },
+  @{ file = 'preload-app.cjs'; pattern = 'function createProductApi\(' },
+  @{ file = 'preload-app.cjs'; pattern = 'exposeInMainWorld\("dshDesktop"' },
+  @{ file = 'client.js';       pattern = 'async restoreSelection\(workspaces,sessions\)' },
+  @{ file = 'client.js';       pattern = 'replaceMain\(target,signal,panel,beforeOpen\)' }
+)
+foreach ($probe in $probes) {
+  $n = (Select-String -LiteralPath (Join-Path $new $probe.file) -Pattern $probe.pattern -AllMatches |
+        ForEach-Object { $_.Matches.Count } | Measure-Object -Sum).Sum
+  "{0,-16} {1,-8} {2}" -f $probe.file, $(if ($n -ge 1) { 'OK' } else { 'MISSING' }), $probe.pattern
+}
+```
+
+六行必须全部 `OK`（这些文件是压缩成单行的，别用"匹配到几行"判断，用上面的 `-AllMatches` 计数）。**任一 `MISSING` = 上游结构变了，按开头铁律停下报告**，不要试图在新结构上拼一个"差不多"的补丁。此时需要宿主决定：是按新结构重新设计，还是放弃该版本。
+
+同理，第 1–9 条中任何一条的 `old` 在文件里搜不到或搜到多处，也按铁律停下。
+
+### 4.1 具体改动
 
 `lib/main.js`
 1. 顶部 `import { createConversationWindows } from './conversation-windows.mjs'`。
@@ -130,6 +191,43 @@ Get-Content (Join-Path $res "conversation-window-plugin.sha256")
 ```
 
 安装成功后：`app.asar` = `$patchedHash`，备份 = 原版哈希，记录文件 = `$patchedHash`。
+
+### 6.1 静态核验（装完必做）
+
+哈希对只证明"文件换了"，不证明补丁语义还在。直接从**已安装的** asar 里读回关键字符串：
+
+```python
+import json, os, struct, pathlib
+res = pathlib.Path(os.environ['LOCALAPPDATA']) / 'Programs' / 'DeepSeek Harness' / 'resources'
+f = open(res / 'app.asar', 'rb'); a, hs, z, js = struct.unpack('<4I', f.read(16))
+h = json.loads(f.read(js)); base = 8 + hs
+def leaves(t, p=''):
+    for n, e in t['files'].items():
+        q = p + n
+        yield from (leaves(e, q + '/') if 'files' in e else [(q, e)])
+d = dict(leaves(h))
+def read(k):
+    e = d[k]; f.seek(base + int(e['offset'])); return f.read(e['size'])
+checks = [
+    ('lib/conversation-windows.mjs', b'createConversationWindows'),
+    ('lib/main.js', b'./conversation-windows.mjs'),
+    ('lib/main.js', b"ipcMain.handle('dsh-desktop:conversation-open'"),
+    ('lib/main.js', b'conversationWindows.owns'),
+    ('lib/preload-app.cjs', b'conversations: { openWindow'),
+    ('lib/preload-app.cjs', b'dsh-desktop:conversation-open'),
+    ('dsh/node_modules/@deepseek-ai/dsh-client-ui-workspace/lib/client.js', b'get(`conversation`)'),
+]
+fail = 0
+for path, needle in checks:
+    ok = path in d and needle in read(path)
+    fail += 0 if ok else 1
+    print(('PASS' if ok else 'FAIL'), path, '|', needle.decode()[:48])
+print('RESULT', 'PASS' if fail == 0 else f'FAIL ({fail})')
+```
+
+七项全 PASS 才能交给宿主测。任何一项 FAIL，说明改动没落进归档或落在了错位置，按铁律停下报告，不要靠"再装一次试试"。
+
+这里只验证结构存在，**不验证运行时行为**（窗口能否创建、会话能否接通）。后者只能人工测，见 README「实机复测清单」。
 
 ## 7. 回滚
 
