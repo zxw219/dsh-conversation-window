@@ -20,7 +20,9 @@ export function createConversationWindows({ applicationUrl, createWindow, preloa
     async open(event, sessionId) {
       assertSender(event);
       const url = conversationWindowUrl(applicationUrl, sessionId);
-      const window = createWindow(preload, false, false);
+      // Same chrome variant as the main window: the app renderer always reserves its
+      // 40px Windows caption band, so a native frame here would stack two title bars.
+      const window = createWindow(preload, false, true);
       windows.add(window);
       window.once('closed', () => windows.delete(window));
       try {

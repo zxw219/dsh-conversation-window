@@ -10,7 +10,8 @@ const fake = (fail = false) => {
     applicationUrl: 'dsh-app://app/', preload: 'trusted-preload',
     assertSender(event) { if (event !== 'trusted') throw Error('unowned'); },
     createWindow(preload, show, primary) {
-      assert.deepEqual([preload, show, primary], ['trusted-preload', false, false]);
+      // primary=true keeps the main window's chrome variant; assert it is requested.
+      assert.deepEqual([preload, show, primary], ['trusted-preload', false, true]);
       const w = new EventEmitter();
       w.fail = fail;
       w.webContents = {id: windows.length + 1};

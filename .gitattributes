@@ -1,2 +1,7 @@
 * text=auto eol=lf
 *.asar binary
+# adapter/conversation-windows.mjs is injected byte-for-byte into app.asar and the
+# resulting archive hash is pinned by scripts/install-and-restart.ps1; keep its
+# checkout bytes (CRLF) stable so a rebuild reproduces the same archive.
+adapter/*.mjs text eol=crlf
+*.cmd text eol=crlf

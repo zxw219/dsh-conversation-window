@@ -34,13 +34,17 @@ python scripts/build_adapter.py --source "C:\path\to\DeepSeek Harness\resources\
 
 ### 2. 退出桌面应用后安装适配
 
-完全退出 DSH（含托盘）；命令中填入真实资源目录：
+最省事的方式：构建完成后双击仓库根目录的 `install-and-restart.cmd`。它不杀任何进程，打印 `WAIT` 后等你从托盘退出 DSH，再原子替换归档、校验哈希、写安装记录，并只启动一次应用。全过程写入 `build/install-restart.log`。
+
+也可以手动执行（需先完全退出 DSH，含托盘）：
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-adapter.ps1 -Resources "C:\path\to\DeepSeek Harness\resources"
 ```
 
-脚本拒绝运行中的应用和不匹配的原始归档，保留独立备份。重启 DSH。
+`app.asar` 在应用运行期间被独占锁定，必须退出后才能替换。脚本拒绝不匹配的原始归档，保留独立备份，安装失败自动回滚。
+
+**补丁会随桌面端更新失效**（nightly 通道整包替换 `app.asar`）。失效后的判定、重装与版本变更重做流程见 [`docs/REPAIR.md`](docs/REPAIR.md)。
 
 ### 3. 安装 Cordis 插件
 
@@ -72,7 +76,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-adapter.ps1 
 
 ## 实际验证与待验收
 
-本次发布前本机执行结果：**17/17 自动化测试通过**（窗口管理器 5、插件 9、路由 3）；Client/Host JavaScript 语法检查通过；使用 Windows Desktop 0.2.2-rc.3 原始本地归档成功构建适配。没有运行安装器写入操作，也没有完成真实双窗口/模型生成验收。GitHub CI 只运行不依赖本地应用归档的 14 项测试。
+本次发布前本机执行结果：**17/17 自动化测试通过**（窗口管理器 5、插件 9、路由 3）；Client/Host JavaScript 语法检查通过；使用 Windows Desktop 0.2.2-rc.3 原始本地归档成功构建适配。GitHub CI 只运行不依赖本地应用归档的 14 项测试。
+
+2026-11-14 补记：适配补丁已在 Windows Desktop 0.2.2-rc.3 上实际写入（`app.asar` = `EE66AA50…04EC0`，原版备份与安装记录就位），应用以补丁版正常启动；**真实双窗口与模型生成验收仍未完成**。写入过程与排障细节见 [`docs/REPAIR.md`](docs/REPAIR.md)。
 
 自动化测试：
 
@@ -104,7 +110,9 @@ node --test tests/routing.test.mjs
 - `client.js`、`index.js`、`cordis.patch.yml`、`locale/`、`icon.svg`：原创插件。
 - `adapter/conversation-windows.mjs`：窗口生命周期与 ID 校验。
 - `adapter/changes.json`：最小版本固定差异，**不含完整上游编译产物**。
-- `scripts/`：本机构建、显式安装/回滚；不会下载应用或修改个人 profile。
+- `scripts/`：本机构建、显式安装/回滚、一键重装与重启；不会下载应用或修改个人 profile。
+- `install-and-restart.cmd`：构建后用这个入口安装补丁（等待手动退出，不杀进程）。
+- `docs/REPAIR.md`：补丁失效后的判定、重装与版本升级重做流程，含已踩过的坑。
 - `tests/`：自动化测试。
 
 原创部分采用 MIT；上游差异的来源和许可声明见 THIRD_PARTY_NOTICES.md。本项目不隶属于 DeepSeek，也不代表官方支持。
