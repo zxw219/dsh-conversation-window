@@ -28,21 +28,27 @@
 python scripts/build_adapter.py --source "C:\path\to\DeepSeek Harness\resources\app.asar"
 ```
 
-输出到被 Git 忽略的 `build/`。输出包括完整本地应用归档和用于路由测试的本地文件，**不得上传这些输出**。
+输出到被 Git 忽略的 `build/`，含完整本地应用归档和路由测试用的本地文件，**不得上传**。
 
-若已装过本项目早期补丁，应先恢复原始备份；安装器不会覆盖已经修改的安装。没有原始归档时，重新取得官方兼容版本，不要修改哈希。
+安装器只接受两种输入：官方原版归档，或它自己装出来的补丁归档。哈希对不上的（被别的工具改过、或版本已更新）一律拒绝，先用官方安装器恢复。
 
-### 2. 退出桌面应用后安装适配
+### 2. 安装桌面适配
 
-最省事的方式：构建完成后双击仓库根目录的 `install-and-restart.cmd`。它不杀任何进程，打印 `WAIT` 后等你从托盘退出 DSH，再原子替换归档、校验哈希、写安装记录，并只启动一次应用。全过程写入 `build/install-restart.log`。
+双击仓库根目录的 `install-and-restart.cmd`。只有一个脚本、一种流程：
 
-也可以手动执行（需先完全退出 DSH，含托盘）：
+1. 校验候选包哈希与原版备份；
+2. 打印 `WAIT`，等你从托盘退出 DSH（`app.asar` 在应用运行期间被独占锁定，脚本不杀进程）；
+3. 原子替换归档 → 复核哈希 → 写安装记录 → 只启动一次应用。
+
+全过程写入 `build/install-adapter.log`。命令行等价形式：
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-adapter.ps1 -Resources "C:\path\to\DeepSeek Harness\resources"
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-adapter.ps1
+# 只校验不修改：
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-adapter.ps1 -CheckOnly
 ```
 
-`app.asar` 在应用运行期间被独占锁定，必须退出后才能替换。脚本拒绝不匹配的原始归档，保留独立备份，安装失败自动回滚。
+非默认安装位置用 `-Resources "C:\path\to\DeepSeek Harness\resources"`。
 
 **补丁会随桌面端更新失效**（nightly 通道整包替换 `app.asar`）。失效后的判定、重装与版本变更重做流程见 [`docs/REPAIR.md`](docs/REPAIR.md)。
 
@@ -54,15 +60,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-adapter.ps1 
 
 这不是在 shell 中运行的命令。不要手动编辑个人 profile 配置。不需要 npm 安装脚本或第三方依赖。仓库发布本身不会自动安装插件。
 
-### 回滚
+## 回滚
 
-先在 DSH 插件管理中停用此插件，再退出应用，运行：
+同一个脚本，加 `-Restore`（同样会等你从托盘退出 DSH，完成后启动一次）：
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-adapter.ps1 -Resources "C:\path\to\DeepSeek Harness\resources" -Restore
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-adapter.ps1 -Restore
 ```
 
-如果安装后应用归档又被更新过，回滚器拒绝覆盖；请使用官方安装器恢复。备份不会自动删除。
+或在 `install-and-restart.cmd` 后追加 `-Restore`。回滚要求当前归档仍等于安装记录里的哈希；若应用之后又更新过，脚本拒绝覆盖并提示改用官方安装器。备份文件不会自动删除。
 
 ## 原理与安全边界
 
@@ -110,8 +116,9 @@ node --test tests/routing.test.mjs
 - `client.js`、`index.js`、`cordis.patch.yml`、`locale/`、`icon.svg`：原创插件。
 - `adapter/conversation-windows.mjs`：窗口生命周期与 ID 校验。
 - `adapter/changes.json`：最小版本固定差异，**不含完整上游编译产物**。
-- `scripts/`：本机构建、显式安装/回滚、一键重装与重启；不会下载应用或修改个人 profile。
-- `install-and-restart.cmd`：构建后用这个入口安装补丁（等待手动退出，不杀进程）。
+- `scripts/build_adapter.py`：从本机原始归档构建补丁包。
+- `scripts/install-adapter.ps1`：唯一的安装/回滚脚本（`-Restore` 反向操作）。
+- `install-and-restart.cmd`：入口，等价于运行上面的脚本。
 - `docs/REPAIR.md`：补丁失效后的判定、重装与版本升级重做流程，含已踩过的坑。
 - `tests/`：自动化测试。
 

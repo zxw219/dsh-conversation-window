@@ -4,7 +4,7 @@
   "description": "Experimental DSH conversation context-menu action for native windows; requires a compatible desktop adapter.",
   "type": "module",
   "exports": { ".": "./index.js", "./client": "./client.js", "./locale/*.json": "./locale/*.json", "./icon": "./icon.svg" },
-  "files": ["index.js", "client.js", "cordis.patch.yml", "locale/*.json", "icon.svg"],
+  "files": ["index.js", "client.js", "cordis.patch.yml", "locale/*.json", "icon.svg", "docs/*.md", "scripts/*", "adapter/*"],
   "license": "MIT",
   "scripts": { "test": "node --test tests/conversation-windows.test.mjs tests/plugin.test.mjs" },
   "repository": { "type": "git", "url": "https://github.com/zxw219/dsh-conversation-window.git" },

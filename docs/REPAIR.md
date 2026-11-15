@@ -28,13 +28,14 @@
 1. 双击仓库根目录 `install-and-restart.cmd`（**不要**在 DSH 自带终端或 DSH 派生的 shell 里跑）。
 2. 窗口打印 `WAIT DeepSeek Harness is running` 后，**托盘图标 → 退出**（点窗口叉只是隐藏）。
 3. 脚本自动：备份原版 → 暂存候选 → `File.Replace` 原子替换 → 校验哈希 → 写 `conversation-window-plugin.sha256` → 只启动一次 DSH。
-4. 看到 `OK` 即成功。全过程记录在 `build/install-restart.log`。
+4. 看到 `OK` 即成功。全过程记录在 `build/install-adapter.log`。
 
 要点：
 
+- 安装与回滚是**同一个脚本** `scripts/install-adapter.ps1`（`-Restore` 是反向操作），`install-and-restart.cmd` 只是入口，没有第二份实现。
 - 备份文件 `app.before-conversation-window-plugin.asar` 不存在时脚本会自动从当前原版创建并校验；已存在则先验证是否等于原版哈希，不等就拒绝。
 - 候选包哈希必须等于脚本里的 `$patchedHash`；重新构建后要同步更新该常量，脚本会拒绝来历不明的包。
-- 脚本先做祖先进程检查：发现自己在 DSH 进程树内直接退出并提示，不会自杀。
+- 脚本先做祖先进程检查：发现自己在 DSH 进程树内直接拒绝，不会自杀。
 
 ## 3. 版本变更后重做
 
@@ -83,7 +84,7 @@ node --test tests/routing.test.mjs   # 需要上一步的本地产物
 
 ### 3.4 更新固定哈希并安装
 
-把新 `build/app.conversation-window.asar` 的 SHA-256 写入 `scripts/install-and-restart.ps1` 的 `$patchedHash`，然后走第 2 节。
+把新 `build/app.conversation-window.asar` 的 SHA-256 写入 `scripts/install-adapter.ps1` 的 `$patchedHash`，然后走第 2 节。
 
 ## 4. 补丁改了什么（锚点语义）
 
@@ -111,8 +112,8 @@ node --test tests/routing.test.mjs   # 需要上一步的本地产物
 
 | 现象 | 真因 | 处理 |
 |---|---|---|
-| 安装脚本日志停在 `Stopping only the verified desktop executable (N processes).`，之后无输出 | 旧版脚本先杀 DSH 进程，自己被连带终止，复制从未执行 | 已废弃杀进程方案；现改为等待手动退出 |
-| `app.asar` 无法替换，独占打开/重命名都失败 | Electron 运行期间独占锁定 | 必须先完全退出 DSH（含托盘） |
+| （历史）安装日志停在 `Stopping only the verified desktop executable (N processes).` 之后无输出 | 已删除的旧版脚本先杀 DSH 进程，自己被连带终止，复制从未执行 | 杀进程方案已废弃，现为等待手动退出 |
+| `app.asar` 无法替换，独占打开/重命名都失败 | Electron 运行期间独占锁定 | 必须先完全退出 DSH（含托盘）；脚本会自动等 |
 | 用 `Start-Process` 启动后进程立即退出，退出码 0，无窗口 | 宿主环境带 `ELECTRON_RUN_AS_NODE=1`，exe 以 Node 模式运行 | 启动前 `Remove-Item Env:ELECTRON_RUN_AS_NODE` |
 | `Remove-Item` 删 `resources` 下临时文件被拦 | 安全包装的回收站失败即 fail-closed | 改用 `[System.IO.File]::Delete()` |
 | 脚本报「This console is a child of DeepSeek Harness」 | 在 DSH 派生的终端里运行 | 从资源管理器双击 `install-and-restart.cmd` |
@@ -132,13 +133,13 @@ Get-Content (Join-Path $res "conversation-window-plugin.sha256")
 
 ## 7. 回滚
 
-先在 DSH 插件管理里停用本插件，再退出应用：
+先在 DSH 插件管理里停用本插件，再运行（脚本会自己等你退出应用）：
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-adapter.ps1 -Resources "$env:LOCALAPPDATA\Programs\DeepSeek Harness\resources" -Restore
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-adapter.ps1 -Restore
 ```
 
-若安装后又更新过应用，回滚器会拒绝覆盖；用官方安装器恢复。
+`-Restore` 与安装是同一个脚本：校验备份 = 原版 → 等应用退出 → 换回原版 → 删除安装记录 → 启动一次。若安装后又更新过应用，回滚会拒绝覆盖，改用官方安装器恢复。
 
 ## 8. 实测记录
 
